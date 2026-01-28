@@ -1,9 +1,10 @@
 %% Inicijalizacija
+
 clc; clearvars;
 set(0, 'DefaultFigureVisible', 'off');
 
 % ucitavanje .fig filea
-g = load('C:\Users\enrique_ramos\Desktop\e\Projekt_E_data\Igor_Vuković\I12\Igor_Vuković_1.fig','-mat');
+g = load('filepath.fig','-mat'); % dodatak vlastitog patha datoteke
 x2 = g.hgS_070000.children(3,1).children(1,1).properties.XData;
 y2 = g.hgS_070000.children(3,1).children(1,1).properties.YData;
 
@@ -55,19 +56,20 @@ while i < length(blockofinterest)
 end
 
 %% HRV filtriranje (augmented)
+
 HR_ibi = diff(locs);
 
-% realni fiziološki opseg je od 50 do 130 bpm
-valid_ibi = HR_ibi(HR_ibi > 0.5 & HR_ibi < 1.3);
+%postavljanje prihvatljivog opsega za HR
+valid_ibi = HR_ibi(HR_ibi > 0.45 & HR_ibi < 1.3);
 
-% medijan filter, osigurava bolji SDNN
+% medijan filter
 med_ibi = median(valid_ibi);
-HR_ibi_final = valid_ibi(valid_ibi > med_ibi*0.78 & valid_ibi < med_ibi*1.22);
+HR_ibi_final = valid_ibi(valid_ibi > med_ibi*0.85 & valid_ibi < med_ibi*1.15);
 
 % filter razlika
 rr_ms = HR_ibi_final * 1000;
 diff_rr = diff(rr_ms);
-valid_diffs = abs(diff_rr) < 130; 
+valid_diffs = abs(diff_rr) < 80; 
 
 rr_ms_clean = rr_ms([true, valid_diffs]); 
 diff_rr_clean = diff(rr_ms_clean);
@@ -77,12 +79,11 @@ SDNN = std(rr_ms_clean);
 RMSSD = sqrt(mean(diff_rr_clean.^2));
 pNN50 = (sum(abs(diff_rr_clean) > 50) / length(diff_rr_clean)) * 100;
 
-fprintf('\n=REZULTATI:\n');
+fprintf('\nREZULTATI:\n');
 fprintf('Broj otkucaja: %d \n', length(rr_ms_clean));
 fprintf('Prosječni HR: %.1f bpm\n', 60000 / mean(rr_ms_clean));
 fprintf('SDNN: %.2f ms \n', SDNN);
 fprintf('RMSSD: %.2f ms \n', RMSSD);
 fprintf('pNN50: %.2f %% \n', pNN50);
-
 
 %kraj
